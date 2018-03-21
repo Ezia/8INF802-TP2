@@ -46,7 +46,9 @@ def simpleRngTest(a, b, interationNbr, generator):
         maxValue = max(maxValue, randomNumber)
         sumValues = sumValues + randomNumber
 
-    print("minValue = " + str(minValue) + " ; maxValue = " + str(maxValue) 
+    print("param : minValue = " + str(a) + " ; maxValue = " + str(b) 
+            + " ; iteration number = " + str(interationNbr))
+    print("results : minValue = " + str(minValue) + " ; maxValue = " + str(maxValue) 
             + " ; average = " + str(sumValues/interationNbr))
 
 simpleRngTest(-2, 2, 10000, NumericalRecipesGenerator(1))
