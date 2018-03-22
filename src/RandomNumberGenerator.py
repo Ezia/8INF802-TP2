@@ -1,11 +1,11 @@
 #!/usr/bin/python3
-import math
-from decimal import *
 
-getcontext().prec = 2
+
+##### RNG #####
+
 
 class RandomNumberGenerator:
-    """A linear congruential generator"""
+    """A linear congruential generator with bit selection"""
 
     def __init__(self, modulus, multiplier, increment, seed, firstBit, lastBit):
         self.modulus = modulus
@@ -18,17 +18,21 @@ class RandomNumberGenerator:
 
         # Compute the bit mask according to the first and last bits
         self.mask = (1 << (lastBit + 1)) - 1 - ((1 << firstBit) - 1) 
-    
+
+        # Compute the upper bound of the masked numbers (exclusive)
+        self.upperBound = (min(self.mask, modulus - 1) >> self.firstBit) + 1
+
     def next(self, a, b):
         """Get the next random number whithin range [a, b[ (a included, b excluded)"""
 
         # Compute next number in the series
         self.seed = (self.multiplier * self.seed + self.increment) % self.modulus
         
-        # return the projection of the number in the interval ]a, b[
-        return (((self.seed & self.mask) >> self.firstBit) * (b - a) / ((self.modulus-1 & self.mask) >> self.firstBit)) + a
+        # Compute the projection of the number in the interval [a, b[
+        # Select bits between firstBit and lastBit (inclusive), then scale and add offset
+        return ((self.seed & self.mask) >> self.firstBit) * (b - a) / self.upperBound + a
 
-class BordlandGenerator(RandomNumberGenerator):
+class BorlandGenerator(RandomNumberGenerator):
     def __init__(self, seed):
         RandomNumberGenerator.__init__(self, 2**32, 22695477, 1, seed, 16, 30)
 
@@ -36,26 +40,34 @@ class NumericalRecipesGenerator(RandomNumberGenerator):
     def __init__(self, seed):
         RandomNumberGenerator.__init__(self, 2**32, 1664525, 1013904223, seed, 0, 31)
 
+
+##### TESTS #####
+
+
 def simpleRngTest(a, b, iterationNbr, generator):
-    """Test min, max and average value of a generator"""
+    """Test min, max and average values of a generator"""
+
+    # Execute test
 
     minValue = b
     maxValue = a
     sumValues = 0
-
     for i in range(iterationNbr):
         randomNumber = generator.next(a, b)
         minValue = min(minValue, randomNumber)
         maxValue = max(maxValue, randomNumber)
         sumValues = sumValues + randomNumber
 
-    print("param : minValue = " + str(a) + " ; maxValue = " + str(b) 
+    # Print
+
+    print("-----------------------------SIMPLE TEST-----------------------------")
+    print("RNG parameters : min (inclusive) = " + str(a) + " ; max (exclusive) = " + str(b) 
             + " ; iteration number = " + str(iterationNbr))
     print("results : minValue = " + str(minValue) + " ; maxValue = " + str(maxValue) 
             + " ; average = " + str(sumValues/iterationNbr))
 
-def diceTest(iterationNbr):
-    generator = BordlandGenerator(6)
+def diceTest(iterationNbr, generator):
+    """Throw 2 dice and add their values"""
 
     # expected sum probability from 2 to 12
     expectedProba = [1/36, 1/18, 1/12, 1/9, 5/36, 1/6, 5/36, 1/9, 1/12, 1/18, 1/36]
@@ -63,7 +75,8 @@ def diceTest(iterationNbr):
     # empirical sum statistics from 2 to 12
     empiricalStat = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-    # Run dice throw
+    # Execute test
+    
     for i in range(iterationNbr):
         index = int((generator.next(1, 7)) + int(generator.next(1, 7)))-2
         empiricalStat[index] = empiricalStat[index] + 1
@@ -85,11 +98,17 @@ def diceTest(iterationNbr):
     for i in range(2, 9):
         T2 = T2 + (iterationNbr * empiricalStat[i] - iterationNbr * expectedProba[i])**2/(iterationNbr * expectedProba[i]) 
 
+    # Print
+
+    print("-----------------------------DICE-----------------------------")
     print("expected probabilities : " + str(["%.4f" % e for e in expectedProba]))
     print("empirical statistics :   " + str(["%.4f" % e for e in empiricalStat]))
     print("khi 2 statistic : " + str(T1) + " ||| khi 2 law with 5% risk of degree 10 = " + str(18.31))
     print("khi 2 statistic (gathered extremities) : " + str(T2) + " ||| khi 2 law with 5% risk of degree 8 = " + str(15.51))
 
 
-#simpleRngTest(-2, 2, 10000, NumericalRecipesGenerator(1))
-diceTest(1000)
+##### EXECUTION #####
+
+
+simpleRngTest(-2, 2, 100000, BorlandGenerator(6))
+diceTest(1000,NumericalRecipesGenerator(1))
