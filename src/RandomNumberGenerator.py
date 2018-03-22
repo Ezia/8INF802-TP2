@@ -7,7 +7,8 @@
 class RandomNumberGenerator:
     """A linear congruential generator with bit selection"""
 
-    def __init__(self, modulus, multiplier, increment, seed, firstBit, lastBit):
+    def __init__(self, name, modulus, multiplier, increment, seed, firstBit, lastBit):
+        self.name = name
         self.modulus = modulus
         self.multiplier = multiplier
         self.increment = increment
@@ -34,11 +35,11 @@ class RandomNumberGenerator:
 
 class BorlandGenerator(RandomNumberGenerator):
     def __init__(self, seed):
-        RandomNumberGenerator.__init__(self, 2**32, 22695477, 1, seed, 16, 30)
+        RandomNumberGenerator.__init__(self, "Borland C/C++", 2**32, 22695477, 1, seed, 16, 30)
 
 class NumericalRecipesGenerator(RandomNumberGenerator):
     def __init__(self, seed):
-        RandomNumberGenerator.__init__(self, 2**32, 1664525, 1013904223, seed, 0, 31)
+        RandomNumberGenerator.__init__(self, "Numerical Recipies", 2**32, 1664525, 1013904223, seed, 0, 31)
 
 
 ##### TESTS #####
@@ -68,6 +69,9 @@ def simpleRngTest(a, b, iterationNbr, generator):
 
 def diceTest(iterationNbr, generator):
     """Throw 2 dice and add their values"""
+
+    print("-----------------------------DICE TEST-----------------------------")
+    print("generator and seed : " + generator.name + " ; " + str(generator.seed))
 
     # expected sum probability from 2 to 12
     expectedProba = [1/36, 1/18, 1/12, 1/9, 5/36, 1/6, 5/36, 1/9, 1/12, 1/18, 1/36]
@@ -99,16 +103,19 @@ def diceTest(iterationNbr, generator):
         T2 = T2 + (iterationNbr * empiricalStat[i] - iterationNbr * expectedProba[i])**2/(iterationNbr * expectedProba[i]) 
 
     # Print
-
-    print("-----------------------------DICE-----------------------------")
-    print("expected probabilities : " + str(["%.4f" % e for e in expectedProba]))
-    print("empirical statistics :   " + str(["%.4f" % e for e in empiricalStat]))
-    print("khi 2 statistic : " + str(T1) + " ||| khi 2 law with 5% risk of degree 10 = " + str(18.31))
-    print("khi 2 statistic (gathered extremities) : " + str(T2) + " ||| khi 2 law with 5% risk of degree 8 = " + str(15.51))
+    
+    if (T1 >= 18.31):
+        print("!!!!!!!!!!!!!!!!!! KHI 2 NOT PASSED !!!!!!!!!!!!!!!!!!")
+        print("expected probabilities : " + str(["%.4f" % e for e in expectedProba]))
+        print("empirical statistics :   " + str(["%.4f" % e for e in empiricalStat]))
+        print("khi 2 statistic : " + str(T1) + " ##### khi 2 law of degree 10 with 5% risk = " + str(18.31))
+        print("khi 2 statistic (gathered extremities) : " + str(T2) + " ##### khi 2 law of degree 8 with 5% risk = " + str(15.51))
+    else:
+        print("khi 2 OK")
 
 
 ##### EXECUTION #####
 
 
-simpleRngTest(-2, 2, 100000, BorlandGenerator(6))
-diceTest(1000,NumericalRecipesGenerator(1))
+for i in range(1, 101):
+    diceTest(1000,NumericalRecipesGenerator(i))
