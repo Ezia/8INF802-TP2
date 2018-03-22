@@ -24,7 +24,7 @@ class RandomNumberGenerator:
         self.upperBound = (min(self.mask, modulus - 1) >> self.firstBit) + 1
 
     def next(self, a, b):
-        """Get the next random number whithin range [a, b[ (a included, b excluded)"""
+        """Get the next random number within range [a, b[ (a included, b excluded)"""
 
         # Compute next number in the series
         self.seed = (self.multiplier * self.seed + self.increment) % self.modulus
@@ -116,6 +116,6 @@ def diceTest(iterationNbr, generator):
 
 ##### EXECUTION #####
 
-
-for i in range(1, 101):
-    diceTest(1000,NumericalRecipesGenerator(i))
+if __name__ == "__main__":
+    for i in range(1, 101):
+        diceTest(1000,NumericalRecipesGenerator(i))
