@@ -124,9 +124,9 @@ class Application(tk.Frame):
 
         print("\n\n\n#########################\n# STARTING COMPUTATIONS #\n#########################\n")
 
-        for rng in [RngType.NUMERICAL_RECIPES]: # [RngType.BORLAND, RngType.NUMERICAL_RECIPES]:
+        for rng in [RngType.BORLAND, RngType.NUMERICAL_RECIPES]:
             self.rngType.set(str(rng))
-            for walkType in [WalkType.SELF_AVOIDING]: # [WalkType.RANDOM, WalkType.NONREVERSING, WalkType.SELF_AVOIDING]:
+            for walkType in [WalkType.RANDOM, WalkType.NONREVERSING, WalkType.SELF_AVOIDING]:
 
                 self.walkType.set(str(walkType))
                 with open(str(rng.value).lower() + '_' + str(walkType.value).lower() + '_simulation_data.csv', 'w') as csv_file:
