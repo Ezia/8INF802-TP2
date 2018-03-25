@@ -4,6 +4,7 @@ from enum import Enum
 from RandomNumberGenerator import BorlandGenerator, NumericalRecipesGenerator
 import math
 import time
+import csv
 
 class WalkType(Enum):
     RANDOM = 'RANDOM'
@@ -11,7 +12,7 @@ class WalkType(Enum):
     SELF_AVOIDING = 'SELF_AVOIDING'
 
 class RngType(Enum):
-    BORLAND = 'BORDLAND'
+    BORLAND = 'BORLAND'
     NUMERICAL_RECIPES = 'NUMERICAL_RECIPES'
 
 class Application(tk.Frame):
@@ -73,7 +74,9 @@ class Application(tk.Frame):
 
         # initialize buttons
         self.runButton = tk.Button(self, text='Run', command=self.runSimulation)
-        self.runButton.grid(column=1, row=7, columnspan=2, pady=16)
+        self.runButton.grid(column=1, row=7, pady=16)
+        self.runButton = tk.Button(self, text='Run for seeds 1 to 100', command=self.runSimulationMultipleSeeds)
+        self.runButton.grid(column=2, row=7, pady=16)
 
     def initCanvas(self):
         canvasWidth = self.width * self.gridIntervalWidth
@@ -87,7 +90,11 @@ class Application(tk.Frame):
         for i in range(0, canvasWidth + 1, self.gridIntervalWidth):
             self.canvas.create_line(i, 0, i, canvasHeight, fill='#bbb')
 
-    def runSimulation(self):
+    def runSimulation(self, log = False):
+
+        if (log == False):
+            self.writer = None
+
         self.cleanCanvas()
 
         if (self.rngType.get() == str(RngType.BORLAND)):
@@ -103,7 +110,7 @@ class Application(tk.Frame):
             self.runNonreversingWalk()
         elif (self.walkType.get() == str(WalkType.SELF_AVOIDING)):
             iterationNumber = 0
-            maxIterationNumber = 100000
+            maxIterationNumber = 10000
             solutionFound = False
             while (iterationNumber < maxIterationNumber and solutionFound == False):
                 solutionFound = self.runSelfAvoidingWalk()
@@ -112,6 +119,30 @@ class Application(tk.Frame):
                 print('No solution found in ' + str(maxIterationNumber) + ' iterations...')
         else:
             raise ValueError('Unknown walk type selected')
+
+    def runSimulationMultipleSeeds(self):
+
+        print("\n\n\n#########################\n# STARTING COMPUTATIONS #\n#########################\n")
+
+        for rng in [RngType.NUMERICAL_RECIPES]: # [RngType.BORLAND, RngType.NUMERICAL_RECIPES]:
+            self.rngType.set(str(rng))
+            for walkType in [WalkType.SELF_AVOIDING]: # [WalkType.RANDOM, WalkType.NONREVERSING, WalkType.SELF_AVOIDING]:
+
+                self.walkType.set(str(walkType))
+                with open(str(rng.value).lower() + '_' + str(walkType.value).lower() + '_simulation_data.csv', 'w') as csv_file:
+                    self.writer = csv.writer(csv_file, delimiter=',')
+                    self.writer.writerow(['Walk type', 'Number of steps', 'Squared euclidian distance'])
+                    
+                    for j in range(1, 51):
+                        self.numberSteps.set(j)
+                        self.subTotalDistance = 0.0
+                        for i in range(1, 101):
+                            self.seed.set(i)
+                            self.runSimulation(True)
+                        self.writer.writerow([self.walkType.get(), self.numberSteps.get(), str(self.subTotalDistance / 100.0)])
+
+        print("\n\n\n#######################\n# END OF COMPUTATIONS #\n#######################\n")
+                        
 
     def cleanCanvas(self):
         self.canvas.delete('walkRectangle')
@@ -149,6 +180,12 @@ class Application(tk.Frame):
                     break
             self.drawMovementLine(oldPosition[0], oldPosition[1], newPosition[0], newPosition[1])
 
+        x = float(currentPosition[0] - self.startingPosition[0])**2.
+        y = float(currentPosition[1] - self.startingPosition[1])**2.
+        self.printEuclidianDistance(x, y)
+        if (self.writer != None):
+            self.subTotalDistance += x + y
+
     def runNonreversingWalk(self):
         currentPosition = self.startingPosition
         previousMovement = (0, 0)
@@ -168,6 +205,12 @@ class Application(tk.Frame):
                     previousMovement = movement
                     break
             self.drawMovementLine(oldPosition[0], oldPosition[1], newPosition[0], newPosition[1])
+
+        x = float(currentPosition[0] - self.startingPosition[0])**2.
+        y = float(currentPosition[1] - self.startingPosition[1])**2.
+        self.printEuclidianDistance(x, y)
+        if (self.writer != None):
+            self.subTotalDistance += x + y
 
     def runSelfAvoidingWalk(self):
 
@@ -195,7 +238,15 @@ class Application(tk.Frame):
                 return False
             self.drawMovementLine(oldPosition[0], oldPosition[1], newPosition[0], newPosition[1])
 
+        x = float(currentPosition[0] - self.startingPosition[0])**2.
+        y = float(currentPosition[1] - self.startingPosition[1])**2.
+        self.printEuclidianDistance(x, y)
+        if (self.writer != None):
+            self.subTotalDistance += x + y
         return True
+    
+    def printEuclidianDistance(self, x, y):
+        print("\nRNG: " + self.rngType.get() + "\nWalk type: " + self.walkType.get() + "\nSeed: " + self.seed.get() + "\nNumber of steps: " + self.numberSteps.get() + "\nSquared euclidian distance: " + str(x + y))
 
 if __name__ == "__main__":
     #app = Application()
